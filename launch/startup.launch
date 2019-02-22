@@ -1,0 +1,9 @@
+<launch>
+    <arg name="input_topic" default="/cfs/wrench" />
+    <arg name="output_topic" default="/cfs/wrenchfiltered" />
+    <arg name="servicename" default="/cfs/calibration" />
+
+    <node name="wrench_filter" pkg="wrench_filter" type="filter.py" output="screen"
+        args="$(arg input_topic) $(arg output_topic) $(arg servicename)" />
+    <node name="cfs_sensor" pkg="cfs_sensor" type="cfs_sensor" output="screen" />
+</launch>
