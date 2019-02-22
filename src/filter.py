@@ -4,6 +4,8 @@ import rospy
 import numpy as np
 import time
 import sys
+import os
+import pickle
 
 import wrench_filter
 import wrench_filter.srv
@@ -16,6 +18,8 @@ class WrenchFilter(object):
     def __init__( self, input_topic_name,\
                         output_topic_name,\
                         calib_service_name,\
+                        positionVector,\
+                        rotationMatrix,\
                         node_name="WrenchFilter" ):
         """
         """
@@ -24,6 +28,16 @@ class WrenchFilter(object):
         self.sub = rospy.Subscriber( input_topic_name, WrenchStamped, self.callback )
         self.pub = rospy.Publisher( output_topic_name, WrenchStamped, queue_size=10 )
         self.service = rospy.Service( calib_service_name, wrench_filter.srv.Calibration, self.docalib )
+
+        if type(positionVector)==list:
+            self.position = np.array( positionVector )
+        else:
+            self.position = positionVector
+
+        if type(rotationMatrix)==list:
+            self.rotationMatrix = np.array( rotationMatrix )
+        else:
+            self.rotationMatrix = rotationMatrix
 
         self.position = np.array( [ 0, 0, -51.1 ] ) # 6軸計測モジュールから見た, 6軸センサの姿勢
         self.R = np.array([[ 0.0,-1.0, 0.0 ],
@@ -100,11 +114,19 @@ class WrenchFilter(object):
         return
 
 if __name__ == "__main__":
-    if len( sys.argv ) < 4:
-        print( "usage: " + sys.argv[0] + " <input topic> <output topic> <service name>" )
+    if len( sys.argv ) < 5:
+        print( "usage: <input topic> <output topic> <service name> <position and rotation matrix dump file>" )
         sys.exit(1)
+
+    with open( os.path.abspath( sys.argv[4] ) ) as f:
+        transformation = pickle.open( f )
+        positionVector = transformation[0]
+        rotationMatrix = transformation[1]
 
     a = WrenchFilter( sys.argv[1],\
                       sys.argv[2],\
-                      sys.argv[3] )
+                      sys.argv[3],\
+                      positionVector,\
+                      rotationMatrix
+                      )
     rospy.spin()
